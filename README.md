@@ -8,20 +8,21 @@ Tendon-driven robotic gripper prototype with servo-based actuation, designed for
 
 - Modular finger design completed
 - Servo-based actuation base implemented
-- 3D printed prototype parts available
 - Cycloidal transmission concept developed and discontinued
+- Assembly exported as STEP file
 
-This repository currently contains STL files of the mechanical components and a preview of the CAD assembly.
+This repository currently contains the CAD assembly exported as a STEP file for documentation purposes.  
+STL files and manufacturing assets will be added in subsequent updates.
 
 ---
 
 ## Actuation Iterations
 
-**V1 – Cycloidal Transmission (Legacy)**
-- Multi-part cycloidal drive
+### V1 – Cycloidal Transmission (Legacy)
+- Multi-part cycloidal drive (~30 components)
 - Discontinued due to speed limitations and mechanical complexity
 
-**V2 – Servo-Based Actuation (Current)**
+### V2 – Servo-Based Actuation (Current)
 - Direct MG90S servo integration
 - Simplified architecture
 - Improved responsiveness
@@ -32,13 +33,14 @@ This repository currently contains STL files of the mechanical components and a 
 
 - 1× MG90S Micro Servo  
 - 9× MR128 ZZ Ball Bearings  
-- Tendon line (nylon line)
+- Nylon monofilament line (tendon)  
 - M3 and M4 fasteners  
 
 ---
 
 ## Planned Next Steps
 
+- Upload STL files for 3D printing  
 - Embedded control integration  
 - EMG signal acquisition  
 - Signal preprocessing and closed-loop testing  
@@ -48,4 +50,5 @@ This repository currently contains STL files of the mechanical components and a 
 ## Note
 
 The mechanical design was developed in Fusion 360.  
-This repository contains exported STL files for documentation and prototyping purposes.
+The repository currently provides a neutral CAD export (STEP format).  
+Design files and manufacturing documentation will be structured and added progressively.
