@@ -18,7 +18,7 @@ This repository currently contains STL files of the mechanical components and a 
 ## Actuation Iterations
 
 **V1 – Cycloidal Transmission (Legacy)**
-- Multi-part cycloidal drive (~30 components)
+- Multi-part cycloidal drive
 - Discontinued due to speed limitations and mechanical complexity
 
 **V2 – Servo-Based Actuation (Current)**
@@ -32,8 +32,8 @@ This repository currently contains STL files of the mechanical components and a 
 
 - 1× MG90S Micro Servo  
 - 9× MR128 ZZ Ball Bearings  
-- Tendon line  
-- M3 fasteners  
+- Tendon line (nylon line)
+- M3 and M4 fasteners  
 
 ---
 
