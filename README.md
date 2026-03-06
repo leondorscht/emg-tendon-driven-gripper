@@ -16,6 +16,24 @@ Tendon-driven robotic gripper prototype with servo-based actuation, designed for
 
 ---
 
+## Design Reference
+
+The mechanical concept of the gripper is inspired by the tendon-driven underactuated gripper presented in:
+
+Yi, J., Kim, B., Cho, K.-J., & Park, Y.-L. (2023).  
+**Underactuated Robotic Gripper With Fiber-Optic Force Sensing Tendons.**  
+IEEE Robotics and Automation Letters, 8(11), 7607–7614.  
+https://doi.org/10.1109/LRA.2023.3315204
+
+This project is **not a direct reproduction** of the original system.  
+Instead, the CAD model adapts key mechanical ideas from the paper into a simplified prototype intended for:
+
+- rapid prototyping with 3D printing  
+- servo-based actuation  
+- future integration of EMG-based control
+
+---
+
 ## Current Status
 
 - Modular finger design completed  
