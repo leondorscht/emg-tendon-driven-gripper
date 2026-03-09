@@ -58,6 +58,14 @@ STL files and manufacturing assets will be added in subsequent updates.
 - Reduced mechanical complexity  
 - Improved responsiveness and controllability  
 
+**Actuator selection**
+
+The current prototype uses MG90S micro servos for actuation.
+
+While these servos provide limited torque for some grasp scenarios, they were intentionally selected for the initial prototype due to their low cost, availability, and ease of integration. This allows rapid mechanical iteration and validation of the tendon-driven finger design before transitioning to higher-performance actuators.
+
+Future iterations may explore higher torque servos or alternative actuation mechanisms once the mechanical design is fully validated.
+
 ---
 
 ## Bill of Materials (Servo Version)
