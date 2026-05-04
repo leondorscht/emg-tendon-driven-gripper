@@ -18,8 +18,8 @@ def parse_args():
     parser.add_argument("--port", required=True)
     parser.add_argument("--fqbn", required=True)
 
-    parser.add_argument("--sketch-path", default="arduino/emg_control")
-    parser.add_argument("--config-path", default="arduino/emg_control/config.h")
+    parser.add_argument("--sketch-path", default="arduino/emg_controller")
+    parser.add_argument("--config-path", default="arduino/emg_controller/config.h")
     parser.add_argument("--output", default="data/calibration.csv")
 
     parser.add_argument("--baudrate", type=int, default=9600)
