@@ -29,3 +29,7 @@ build/
 
 # Environment files
 .env
+
+# Keep the folder, remove the data
+data/*
+!data/.gitkeep
