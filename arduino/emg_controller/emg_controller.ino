@@ -45,7 +45,7 @@ void calibration_loop() {
   // records emg data and sends it over serial to python, which then selects
   // the threshold value for emg and runs the control loop
 
-  int emg_value = read_smoothed_emg(EMG_PIN);
+  int emg_value = read_smoothed_emg();
 
   Serial.println(emg_value);
 
@@ -55,7 +55,7 @@ void calibration_loop() {
 void control_loop() {
   // continously read emg data and compare to the threshold.
   // if emg > threshold, close the gripper
-  int emg_value = read_smoothed_emg(EMG_PIN);
+  int emg_value = read_smoothed_emg();
 
   if (emg_value > EMG_THRESHOLD) {
     set_all_servos(SERVO_CLOSE_ANGLE);
@@ -74,33 +74,32 @@ void set_all_servos(int servo_angle) {
 }
 
 int read_smoothed_emg() {
-    // read the raw value
-    int raw_value = analogRead(EMG_PIN);
+  // read the raw value
+  int raw_value = analogRead(EMG_PIN);
 
-    // remove the old buffer value and replace it with new
-    emg_sum -= emg_buffer[emg_buffer_index];
-    emg_buffer[emg_buffer_index] = raw_value;
-    emg_sum += raw_value;
+  // remove the old buffer value and replace it with new
+  emg_sum -= emg_buffer[emg_buffer_index];
+  emg_buffer[emg_buffer_index] = raw_value;
+  emg_sum += raw_value;
 
-    // increase buffer idx to next place
-    emg_buffer_index++;
+  // increase buffer idx to next place
+  emg_buffer_index++;
 
-    // if index exceeds buffer space, set again to 0
-    if (emg_buffer_index >= EMG_SMOOTHING_WINDOW) {
-        emg_buffer_index = 0;
-        emg_buffer_filled = true;
-    }
+  // if index exceeds buffer space, set again to 0
+  if (emg_buffer_index >= EMG_SMOOTHING_WINDOW) {
+    emg_buffer_index = 0;
+    emg_buffer_filled = true;
+  }
 
-    // if buffer filled, set count to EMG_SMOOTHING_WINDOW else emg_buffer_index
-    // --> do not always divide vy EMG_SMOOTHING_WINDOW
-    int count = emg_buffer_filled ? EMG_SMOOTHING_WINDOW : emg_buffer_index;
+  // if buffer filled, set count to EMG_SMOOTHING_WINDOW else emg_buffer_index
+  // --> do not always divide vy EMG_SMOOTHING_WINDOW
+  int count = emg_buffer_filled ? EMG_SMOOTHING_WINDOW : emg_buffer_index;
 
-    //edge case
-    if (count == 0) {
-        return raw_value;
-    }
+  // edge case
+  if (count == 0) {
+    return raw_value;
+  }
 
-    // mean
-    return emg_sum / count;
+  // mean
+  return emg_sum / count;
 }
-
