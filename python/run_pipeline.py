@@ -30,8 +30,8 @@ def parse_args():
     parser.add_argument("--smoothing-window", type=int, default=10)
 
     parser.add_argument("--state-length", type=float, default=5)
-    parser.add_argument("--rest-length", type=float, default=3)
-    parser.add_argument("--num-repetitions", type=int, default=10)
+    parser.add_argument("--rest-length", type=float, default=5)
+    parser.add_argument("--num-repetitions", type=int, default=5)
 
     parser.add_argument("--rest-state-id", type=int, default=0)
     parser.add_argument("--active-state-ids", type=int, nargs="+", default=[1])
