@@ -26,7 +26,7 @@ def parse_args():
     parser.add_argument("--emg-pin", default="A0")
     parser.add_argument("--servo-pins", type=int, nargs="+", default=[9, 10, 11])
     parser.add_argument("--servo-open-angle", type=int, default=0)
-    parser.add_argument("--servo-close-angle", type=int, default=90)
+    parser.add_argument("--servo-close-angle", type=int, default=180)
     parser.add_argument("--smoothing-window", type=int, default=10)
 
     parser.add_argument("--state-length", type=float, default=5)
