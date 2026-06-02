@@ -27,7 +27,12 @@ def parse_args():
     parser.add_argument("--servo-pins", type=int, nargs="+", default=[9, 10, 11])
     parser.add_argument("--servo-open-angle", type=int, default=0)
     parser.add_argument("--servo-close-angle", type=int, default=180)
+
     parser.add_argument("--smoothing-window", type=int, default=10)
+    parser.add_argument("--rms-window", type=int, default=32)
+
+    parser.add_argument("--activation-count-threshold", type=int, default=20)
+    parser.add_argument("--release-count-threshold", type=int, default=10)
 
     parser.add_argument("--state-length", type=float, default=5)
     parser.add_argument("--rest-length", type=float, default=5)
@@ -35,7 +40,7 @@ def parse_args():
 
     parser.add_argument("--rest-state-id", type=int, default=0)
     parser.add_argument("--active-state-ids", type=int, nargs="+", default=[1])
-    parser.add_argument("--threshold-multiplier", type=float, default=3.0)
+    parser.add_argument("--threshold-multiplier", type=float, default=2.0)
 
     parser.add_argument("--cli-path", default="arduino-cli")
 
@@ -64,6 +69,10 @@ def write_calibration_config(args):
         serial_baudrate=args.baudrate,
         emg_pin=args.emg_pin,
         emg_threshold=1023,
+        emg_baseline=350,
+        rms_window=args.rms_window,
+        activation_count_threshold=args.activation_count_threshold,
+        release_count_threshold=args.release_count_threshold,
         servo_pins=args.servo_pins,
         servo_open_angle=args.servo_open_angle,
         servo_close_angle=args.servo_close_angle,
@@ -71,7 +80,7 @@ def write_calibration_config(args):
     )
 
 
-def write_control_config(args, threshold):
+def write_control_config(args, threshold, baseline):
     writer = ConfigWriter(config_path=args.config_path)
 
     writer.write_config(
@@ -79,6 +88,10 @@ def write_control_config(args, threshold):
         serial_baudrate=args.baudrate,
         emg_pin=args.emg_pin,
         emg_threshold=int(threshold),
+        emg_baseline=int(baseline),
+        rms_window=args.rms_window,
+        activation_count_threshold=args.activation_count_threshold,
+        release_count_threshold=args.release_count_threshold,
         servo_pins=args.servo_pins,
         servo_open_angle=args.servo_open_angle,
         servo_close_angle=args.servo_close_angle,
@@ -124,7 +137,10 @@ def calculate_threshold(args, csv_path):
         multiplier=args.threshold_multiplier,
     )
 
-    return calculator.calculate(csv_path)
+    return calculator.calculate(
+        csv_path=csv_path,
+        rms_window=args.rms_window,
+    )
 
 
 def main():
@@ -142,12 +158,14 @@ def main():
     print("Recording calibration data...")
     csv_path = record_calibration(args, protocol)
 
-    print("Calculating threshold...")
-    threshold = calculate_threshold(args, csv_path)
+    print("Calculating threshold and baseline...")
+    threshold, baseline = calculate_threshold(args, csv_path)
+
     print(f"Threshold: {threshold}")
+    print(f"Baseline: {baseline}")
 
     print("Writing control config...")
-    write_control_config(args, threshold)
+    write_control_config(args, threshold, baseline)
 
     print("Flashing control firmware...")
     flash_arduino(args)
