@@ -10,13 +10,14 @@ class ConfigWriter:
     def format_servo_pins(self, servo_pins):
         if len(servo_pins) == 0:
             raise ValueError("Servo pin list cannot be empty")
-        else:
-            pin_string = "{"
-            for pin in servo_pins:
-                pin_string += str(pin)
-                pin_string += ","
-            pin_string = pin_string[:-1]
-            pin_string += "}"
+
+        pin_string = "{"
+        for pin in servo_pins:
+            pin_string += str(pin)
+            pin_string += ","
+
+        pin_string = pin_string[:-1]
+        pin_string += "}"
 
         return pin_string
 
@@ -26,78 +27,102 @@ class ConfigWriter:
         serial_baudrate,
         emg_pin,
         emg_threshold,
+        emg_baseline,
+        rms_window,
+        activation_count_threshold,
+        release_count_threshold,
         servo_pins,
         servo_open_angle,
         servo_close_angle,
         smoothing_window,
     ):
-        
         mode_calibration = 1 if mode_calibration else 0
-
         pin_string = self.format_servo_pins(servo_pins)
 
         config_content = textwrap.dedent("""\
-                #pragma once
+            #pragma once
 
-                // Operation Mode
-                // set the mode to either calibration (1) or control (0)
-                #define MODE_CALIBRATION {mode_calibration}
+            // Operation Mode
+            // set the mode to either calibration (1) or control (0)
+            #define MODE_CALIBRATION {mode_calibration}
 
-                // Serial
-                #define SERIAL_BAUDRATE {serial_baudrate}
+            // Serial
+            #define SERIAL_BAUDRATE {serial_baudrate}
 
-                // Servos
-                #define NUM_SERVOS {num_servos}
-                const int SERVO_PINS[NUM_SERVOS] = {pin_string};
+            // Servos
+            #define NUM_SERVOS {num_servos}
+            const int SERVO_PINS[NUM_SERVOS] = {pin_string};
 
-                #define SERVO_OPEN_ANGLE {servo_open_angle}
-                #define SERVO_CLOSE_ANGLE {servo_close_angle}
+            #define SERVO_OPEN_ANGLE {servo_open_angle}
+            #define SERVO_CLOSE_ANGLE {servo_close_angle}
 
-                // EMG
-                #define EMG_PIN {emg_pin}
-                #define EMG_THRESHOLD {emg_threshold}
-                #define EMG_SMOOTHING_WINDOW {smoothing_window}
-                """).format(mode_calibration=mode_calibration,
-                            serial_baudrate=serial_baudrate,
-                            num_servos=len(servo_pins),
-                            pin_string=pin_string,
-                            servo_open_angle=servo_open_angle,
-                            servo_close_angle=servo_close_angle,
-                            emg_pin=emg_pin,
-                            emg_threshold=emg_threshold,
-                            smoothing_window=smoothing_window,)
-        
+            // EMG
+            #define EMG_PIN {emg_pin}
+            #define EMG_THRESHOLD {emg_threshold}
+            #define EMG_BASELINE {emg_baseline}
+
+            // RMS feature extraction
+            #define RMS_WINDOW {rms_window}
+
+            // State detection timing
+            #define ACTIVATION_COUNT_THRESHOLD {activation_count_threshold}
+            #define RELEASE_COUNT_THRESHOLD {release_count_threshold}
+
+            // Legacy smoothing value, currently unused
+            #define EMG_SMOOTHING_WINDOW {smoothing_window}
+            """).format(
+                mode_calibration=mode_calibration,
+                serial_baudrate=serial_baudrate,
+                num_servos=len(servo_pins),
+                pin_string=pin_string,
+                servo_open_angle=servo_open_angle,
+                servo_close_angle=servo_close_angle,
+                emg_pin=emg_pin,
+                emg_threshold=emg_threshold,
+                emg_baseline=emg_baseline,
+                rms_window=rms_window,
+                activation_count_threshold=activation_count_threshold,
+                release_count_threshold=release_count_threshold,
+                smoothing_window=smoothing_window,
+            )
+
         return config_content
 
     def write_config(
         self,
-        mode_calibration = True,
-        serial_baudrate = 9600,
-        emg_pin = "A0",
-        emg_threshold = 1023,
-        servo_pins = None,
-        servo_open_angle = 0,
-        servo_close_angle = 90,
-        smoothing_window = 10,
+        mode_calibration=True,
+        serial_baudrate=9600,
+        emg_pin="A0",
+        emg_threshold=1023,
+        emg_baseline=350,
+        rms_window=32,
+        activation_count_threshold=20,
+        release_count_threshold=10,
+        servo_pins=None,
+        servo_open_angle=0,
+        servo_close_angle=90,
+        smoothing_window=10,
     ):
-        
         if servo_pins is None:
             servo_pins = [9, 10, 11]
-        
-        config_string = self.build_config_content(mode_calibration,
-            serial_baudrate,
-            emg_pin,
-            emg_threshold,
-            servo_pins,
-            servo_open_angle,
-            servo_close_angle,
-            smoothing_window,
-            )
-        
+
+        config_string = self.build_config_content(
+            mode_calibration=mode_calibration,
+            serial_baudrate=serial_baudrate,
+            emg_pin=emg_pin,
+            emg_threshold=emg_threshold,
+            emg_baseline=emg_baseline,
+            rms_window=rms_window,
+            activation_count_threshold=activation_count_threshold,
+            release_count_threshold=release_count_threshold,
+            servo_pins=servo_pins,
+            servo_open_angle=servo_open_angle,
+            servo_close_angle=servo_close_angle,
+            smoothing_window=smoothing_window,
+        )
+
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
         self.config_path.write_text(config_string, encoding="utf-8")
-        
-
 
 
 def parse_args():
@@ -107,6 +132,10 @@ def parse_args():
     parser.add_argument("--serial-baudrate", type=int, default=9600)
     parser.add_argument("--emg-pin", default="A0")
     parser.add_argument("--emg-threshold", type=int, default=400)
+    parser.add_argument("--emg-baseline", type=int, default=350)
+    parser.add_argument("--rms-window", type=int, default=32)
+    parser.add_argument("--activation-count-threshold", type=int, default=20)
+    parser.add_argument("--release-count-threshold", type=int, default=10)
     parser.add_argument("--servo-pins", type=int, nargs="+", required=True)
     parser.add_argument("--servo-open-angle", type=int, default=0)
     parser.add_argument("--servo-close-angle", type=int, default=90)
@@ -124,6 +153,10 @@ def main():
         serial_baudrate=args.serial_baudrate,
         emg_pin=args.emg_pin,
         emg_threshold=args.emg_threshold,
+        emg_baseline=args.emg_baseline,
+        rms_window=args.rms_window,
+        activation_count_threshold=args.activation_count_threshold,
+        release_count_threshold=args.release_count_threshold,
         servo_pins=args.servo_pins,
         servo_open_angle=args.servo_open_angle,
         servo_close_angle=args.servo_close_angle,
