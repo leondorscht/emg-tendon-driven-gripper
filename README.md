@@ -47,11 +47,37 @@ emg-tendon-driven-gripper/
 ├── python/
 │   ├── run_pipeline.py          # End-to-end pipeline entry point
 │   ├── calibration_recorder.py  # EMG serial reader, protocol generator, CSV recorder
-│   ├── threshold_calculator.py  # Statistical threshold from calibration data
+│   ├── threshold_calculator.py  # RMS-based threshold from calibration data
 │   ├── config_writer.py         # Writes arduino/emg_controller/config.h
 │   └── arduino_flasher.py       # Compiles and uploads via arduino-cli
 └── requirements.txt
 ```
+
+---
+
+## Signal Processing
+
+EMG control relies on two steps: baseline removal and RMS feature extraction.
+
+**Baseline removal** – during calibration, the median of all rest-state samples is computed and stored as `EMG_BASELINE`. In control mode, the Arduino subtracts this value from each raw ADC reading before computing RMS, removing the DC offset introduced by the sensor circuit (~340 ADC on the DFRobot Gravity EMG sensor).
+
+**RMS (Root Mean Square)** – the signal energy over a sliding window of `RMS_WINDOW` centered samples is computed as:
+
+```
+RMS = sqrt( mean( (x - baseline)^2 ) )
+```
+
+RMS is more robust than a simple mean threshold because mean values are almost identical between rest and contraction states (both dominated by the DC offset), while RMS captures the increase in signal variance during muscle activation.
+
+**Threshold** – computed from rest-state RMS values as:
+
+```
+threshold = rest_RMS_mean + multiplier × rest_RMS_std
+```
+
+With the default `multiplier = 2.0`, approximately 97.7% of rest-state RMS values fall below the threshold. A sanity check warns if the computed threshold exceeds the active-state RMS mean, indicating a failed calibration.
+
+**State detection** – to avoid false triggers from transient spikes, the control loop requires the RMS to exceed the threshold for `ACTIVATION_COUNT_THRESHOLD` consecutive samples before closing, and to fall below it for `RELEASE_COUNT_THRESHOLD` consecutive samples before opening.
 
 ---
 
@@ -61,19 +87,17 @@ The Python pipeline in `python/run_pipeline.py` automates the full calibration-t
 
 1. **Write calibration config** – generates `config.h` with `MODE_CALIBRATION=1` and a passthrough threshold
 2. **Flash calibration firmware** – compiles and uploads the sketch via `arduino-cli`
-3. **Record calibration data** – guides the user through a rest/active protocol and records smoothed EMG values to CSV
-4. **Compute threshold** – calculates `rest_mean + multiplier × rest_std` from the recorded data
-5. **Write control config** – regenerates `config.h` with `MODE_CALIBRATION=0` and the computed threshold
-6. **Flash control firmware** – uploads the final sketch; the Arduino now runs EMG-threshold control
+3. **Record calibration data** – guides the user through a rest/active protocol and records raw EMG values to CSV
+4. **Compute threshold and baseline** – calculates `EMG_BASELINE` (median of rest values) and `EMG_THRESHOLD` (rest RMS mean + multiplier × rest RMS std) from the recorded data
+5. **Write control config** – regenerates `config.h` with `MODE_CALIBRATION=0`, the computed threshold, and the baseline
+6. **Flash control firmware** – uploads the final sketch; the Arduino now runs RMS-based EMG threshold control
 
 ### Arduino firmware modes
 
 The sketch switches behaviour at compile time via `MODE_CALIBRATION` in `config.h`:
 
-- **Calibration mode** – streams smoothed EMG values over serial at 200 Hz
-- **Control mode** – closes all servos when `emg_value > EMG_THRESHOLD`, opens them otherwise
-
-EMG smoothing uses a rolling mean over a configurable window (`EMG_SMOOTHING_WINDOW`).
+- **Calibration mode** – streams raw ADC values over serial at ~200 Hz; Python handles all signal processing
+- **Control mode** – computes RMS on-device after baseline subtraction, closes all servos when `rms_value > EMG_THRESHOLD` for `ACTIVATION_COUNT_THRESHOLD` consecutive samples, opens them after `RELEASE_COUNT_THRESHOLD` consecutive samples below threshold
 
 ### Running the pipeline
 
@@ -94,12 +118,14 @@ Key arguments (all have defaults):
 | `--fqbn` | *(required)* | Fully Qualified Board Name for arduino-cli |
 | `--servo-pins` | `9 10 11` | PWM pins for servos |
 | `--servo-open-angle` | `0` | Servo angle for open state |
-| `--servo-close-angle` | `90` | Servo angle for closed state |
-| `--smoothing-window` | `10` | Rolling mean window for EMG |
+| `--servo-close-angle` | `180` | Servo angle for closed state |
+| `--rms-window` | `32` | RMS window size in samples |
+| `--activation-count-threshold` | `20` | Consecutive samples above threshold to close |
+| `--release-count-threshold` | `10` | Consecutive samples below threshold to open |
 | `--state-length` | `5` | Seconds per active state during calibration |
 | `--rest-length` | `5` | Seconds per rest state during calibration |
 | `--num-repetitions` | `5` | Number of rest/active repetitions |
-| `--threshold-multiplier` | `3.0` | Multiplier on rest std for threshold |
+| `--threshold-multiplier` | `2.0` | Multiplier on rest RMS std for threshold |
 
 `arduino-cli` must be installed and the target board core installed (`arduino-cli core install arduino:avr` for Nano/Uno).
 
@@ -123,12 +149,18 @@ The current prototype uses MG90S micro servos. They were intentionally selected 
 
 ## Bill of Materials (Servo Version)
 
-- 1× MG90S Micro Servo (×3 for full three-finger configuration)
+- 3× MG90S Micro Servo
 - 9× MR128 ZZ Ball Bearings (8×12×3.5 mm)
 - Nylon monofilament line (tendon)
 - M3 and M4 fasteners
 - Arduino Nano (or compatible)
-- EMG sensor module (e.g. MyoWare or equivalent analog output)
+- EMG sensor module with analog output (e.g. DFRobot Gravity EMG Sensor)
+
+---
+
+## Notes on Development
+
+The mechanical design, hardware integration, signal processing approach, and software architecture were developed independently. AI assistance (Claude) was used selectively for code refactoring and documentation only.
 
 ---
 
