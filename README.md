@@ -2,6 +2,8 @@
 
 Tendon-driven robotic gripper with EMG-based open/close control. An automated Python pipeline handles calibration, threshold computation, and Arduino firmware flashing — no manual configuration needed.
 
+[![Gripper Demo Video](https://img.youtube.com/vi/KU1vd0XyC_Q/0.jpg)](https://youtu.be/KU1vd0XyC_Q)
+
 ---
 
 ## System Overview
